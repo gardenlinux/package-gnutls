@@ -1,0 +1,16 @@
+diff --git a/debian/libgnutls30t64.symbols b/debian/libgnutls30t64.symbols
+--- a/debian/libgnutls30t64.symbols
++++ b/debian/libgnutls30t64.symbols
+@@ -33,2 +33,6 @@ libgnutls.so.30 libgnutls30t64 #MINVER#
+  _gnutls_decode_ber_rs_raw@GNUTLS_FIPS140_3_4 3.8.6-0+private+1
++ _gnutls_dh_compute_key@GNUTLS_FIPS140_3_4 3.8.9
++ _gnutls_dh_generate_key@GNUTLS_FIPS140_3_4 3.8.9
++ _gnutls_ecdh_compute_key@GNUTLS_FIPS140_3_4 3.8.9
++ _gnutls_ecdh_generate_key@GNUTLS_FIPS140_3_4 3.8.9
+  _gnutls_encode_ber_rs_raw@GNUTLS_FIPS140_3_4 3.8.6-0+private+1
+@@ -37,2 +41,5 @@ libgnutls.so.30 libgnutls30t64 #MINVER#
+  _rsa_generate_fips186_4_keypair@GNUTLS_FIPS140_3_4 3.8.6-0+private+1
++ drbg_aes_generate@GNUTLS_FIPS140_3_4 3.8.9
++ drbg_aes_init@GNUTLS_FIPS140_3_4 3.8.9
++ drbg_aes_reseed@GNUTLS_FIPS140_3_4 3.8.9
+  dsa_generate_dss_keypair@GNUTLS_FIPS140_3_4 3.7.0
