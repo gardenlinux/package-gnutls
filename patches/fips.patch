@@ -1,15 +1,8 @@
 :100755 100755 e91c7ef 0000000 M	debian/rules
-
 diff --git a/debian/rules b/debian/rules
 index e91c7ef..abfd5e4 100755
 --- a/debian/rules
 +++ b/debian/rules
-@@ -15,2 +15,3 @@ CONFIGUREARGS = \
- 	--enable-ld-version-script --enable-cxx \
-+	--enable-fips140-mode \
- 	--disable-rpath \
-@@ -83,9 +84,2 @@ endif
- 
 -override_dh_installinfo:
 -	dh_installinfo $(BDIR)
 -	if test -e debian/gnutls-doc ; then \
