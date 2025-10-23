@@ -1,0 +1,8 @@
+diff --git a/debian/libgnutls30t64.install b/debian/libgnutls30t64.install
+index 8856fe2..b7611ef 100644
+--- a/debian/libgnutls30t64.install
++++ b/debian/libgnutls30t64.install
+@@ -1,2 +1,3 @@
+ debian/tmp/usr/lib/*/libgnutls.so.*
++debian/tmp/usr/lib/*/.libgnutls.so.*.hmac
+ debian/tmp/usr/share/locale/*

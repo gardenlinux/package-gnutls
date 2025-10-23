@@ -1,20 +1,23 @@
-:100755 100755 e91c7ef 0000000 M	debian/rules
-
 diff --git a/debian/rules b/debian/rules
-index e91c7ef..abfd5e4 100755
+index e91c7ef..c19e6e1 100755
 --- a/debian/rules
 +++ b/debian/rules
-@@ -15,2 +15,3 @@ CONFIGUREARGS = \
- 	--enable-ld-version-script --enable-cxx \
+@@ -14,2 +14,5 @@ AMCONFBUILDINDEP := $(shell if dh_listpackages | grep -q gnutls-doc ; \
+ CONFIGUREARGS = \
 +	--enable-fips140-mode \
- 	--disable-rpath \
-@@ -83,9 +84,2 @@ endif
- 
++	--with-fips140-module-name='Garaden Linux gnutls' \
++	--with-fips140-module-version='3.8.10' \
+ 	--enable-ld-version-script --enable-cxx \
+@@ -82,9 +85,5 @@ endif
+ 	find debian/*/usr/lib/ -name 'libgnutlsxx.*' -delete
+-
 -override_dh_installinfo:
 -	dh_installinfo $(BDIR)
 -	if test -e debian/gnutls-doc ; then \
 -		cd debian/gnutls-doc/usr/share/info && \
 -		sed -i -e 's:image src="\([^"]*.png"\):image src="/usr/share/doc/gnutls-doc/html/\1:g' *.info* ; \
 -	fi
--
- override_dh_compress:
++	# Generate the HMAC files that we need for the selftest.
++	b4deb/lib/fipshmac > debian/tmp/usr/lib/aarch64-linux-gnu/.libgnutls.so.30.hmac
++	sed -i 's|/tmp/tmp[^/]*/src/b4deb/lib/.libs/|/usr/lib/'"$(uname -m)"'-linux-gnu/|g' debian/tmp/usr/lib/aarch64-linux-gnu/.libgnutls.so.30.hmac
+ 

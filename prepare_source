@@ -1,2 +1,5 @@
+# We need to fix the source fil first
+#sed -i  's/1757535027/1760430509/g' /etc/apt/sources.list
+#apt-get update
 apt_src gnutls28
 apply_patches
