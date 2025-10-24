@@ -19,3 +19,4 @@ diff --git a/debian/rules b/debian/rules
 +	# Generate the HMAC files that we need for the selftest.
 +	b4deb/lib/fipshmac > debian/tmp/usr/lib/$(shell uname -m)-linux-gnu/.libgnutls.so.30.hmac
 +	sed -i 's|/tmp/tmp[^/]*/src/b4deb/lib/.libs/|/usr/lib/$(shell uname -m)-linux-gnu/|g' debian/tmp/usr/lib/$(shell uname -m)-linux-gnu/.libgnutls.so.30.hmac
+
