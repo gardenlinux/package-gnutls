@@ -1,2 +1,4 @@
 apt_src gnutls28
 apply_patches
+# Show that this contains modification to the build files of gnutls package.
+version_suffix=gl1
