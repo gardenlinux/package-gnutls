@@ -7,16 +7,39 @@ diff --git a/debian/rules b/debian/rules
 +	--with-fips140-module-name='Garaden Linux gnutls $(DEB_VERSION)' \
 +	--with-fips140-module-version=$(DEB_VERSION) \
  	--enable-ld-version-script --enable-cxx \
-@@ -82,9 +85,5 @@ endif
+@@ -27,2 +30,19 @@ BDIR = -O--builddirectory=b4deb
+ 
++
++execute_after_dh_strip:
++	# Once the shared libary has been striped, we can generate the hmac file to the
++	# internal FIPS test of libgnutls30.
++	# We copy the the striped libary back into the build so we use the fipshmac tool to 
++	# generate the correct hmac and put that into the build target file again.
++	#
++	# Copy target libary
++	cp -vf debian/libgnutls30t64/usr/lib/$(shell uname -m)-linux-gnu/libgnutls.so.30.* b4deb/lib/.libs/
++	# generate the hmac of the striped lib
++	b4deb/lib/fipshmac > debian/tmp/usr/lib/$(shell uname -m)-linux-gnu/.libgnutls.so.30.hmac
++	# Correct the path to be of the target filesystem location
++	sed -i 's|/tmp/tmp[^/]*/src/b4deb/lib/.libs/|/usr/lib/$(uname -m)-linux-gnu/|g' debian/tmp/usr/lib/$(shell uname -m)-linux-gnu/.libgnutls.so.30.hmac
++	# copy it back to the file ready to be packaged.
++	cp -vf debian/tmp/usr/lib/$(shell uname -m)-linux-gnu/.libgnutls.so.30.hmac ./debian/libgnutls30t64/usr/lib/$(shell uname -m)-linux-gnu/.libgnutls.so.30.hmac
++
++
+ override_dh_auto_configure:
+@@ -53,2 +73,3 @@ override_dh_makeshlibs:
+ 
++
+ execute_after_dh_auto_clean:
+@@ -82,9 +103,5 @@ endif
  	find debian/*/usr/lib/ -name 'libgnutlsxx.*' -delete
--
++	# We need to prepeare this, since dh_install expects to copy a file. 
++	touch debian/tmp/usr/lib/$(shell uname -m)-linux-gnu/.libgnutls.so.30.hmac
+ 
 -override_dh_installinfo:
 -	dh_installinfo $(BDIR)
 -	if test -e debian/gnutls-doc ; then \
 -		cd debian/gnutls-doc/usr/share/info && \
 -		sed -i -e 's:image src="\([^"]*.png"\):image src="/usr/share/doc/gnutls-doc/html/\1:g' *.info* ; \
 -	fi
-+	# Generate the HMAC files that we need for the selftest.
-+	b4deb/lib/fipshmac > debian/tmp/usr/lib/$(shell uname -m)-linux-gnu/.libgnutls.so.30.hmac
-+	sed -i 's|/tmp/tmp[^/]*/src/b4deb/lib/.libs/|/usr/lib/$(shell uname -m)-linux-gnu/|g' debian/tmp/usr/lib/$(shell uname -m)-linux-gnu/.libgnutls.so.30.hmac
-
+ 
