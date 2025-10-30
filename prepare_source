@@ -1,3 +1,2 @@
 apt_src gnutls28
 apply_patches
-version_suffix="gl3"
