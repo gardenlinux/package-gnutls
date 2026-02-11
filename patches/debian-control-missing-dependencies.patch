@@ -1,0 +1,15 @@
+--- a/debian/control	2026-02-12 16:42:17.002366762 +0100
++++ b/debian/control	2026-02-12 18:06:04.719225698 +0100
+@@ -15,10 +15,12 @@ Build-Depends: dpkg-dev (>= 1.22.5),
+  freebsd-net-tools [kfreebsd-i386 kfreebsd-amd64] <!nocheck>,
+  gperf,
+  libcmocka-dev <!nocheck>,
++ libev-dev,
+  libidn2-dev,
+  libp11-kit-dev,
+  libssl-dev <!nocheck>,
+  libtasn1-6-dev,
++ libtasn1-bin,
+  libunbound-dev,
+  libunistring-dev,
+  net-tools [!kfreebsd-i386 !kfreebsd-amd64] <!nocheck>,

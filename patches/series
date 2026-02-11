@@ -1,3 +1,5 @@
 fips.patch
 libgnutls30t64.symbols.patch
 libgnutls30t64.install.patch
+debian-control-missing-dependencies.patch
+debian-reduced-docs.patch
