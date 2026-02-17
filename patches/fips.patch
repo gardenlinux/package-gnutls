@@ -4,7 +4,7 @@ diff --git a/debian/rules b/debian/rules
 @@ -14,2 +14,5 @@ AMCONFBUILDINDEP := $(shell if dh_listpackages | grep -q gnutls-doc ; \
  CONFIGUREARGS = \
 +	--enable-fips140-mode \
-+	--with-fips140-module-name='Garaden Linux gnutls $(DEB_VERSION)' \
++	--with-fips140-module-name='Garden Linux 1877 GnuTLS $(DEB_VERSION)' \
 +	--with-fips140-module-version=$(DEB_VERSION) \
  	--enable-ld-version-script --enable-cxx \
 @@ -27,2 +30,19 @@ BDIR = -O--builddirectory=b4deb
