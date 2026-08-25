@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 apt-get install -y --no-install-recommends curl ca-certificates
 
 curl -sSLf https://www.gnupg.org/ftp/gcrypt/gnutls/v3.8/gnutls-3.8.12.tar.xz \
@@ -11,4 +12,5 @@ mv "$salsadir/debian" "$dir/src"
 rm -rf "$salsadir"
 
 apply_patches
-version_suffix="gl3~bp1877"
+version_suffix="gl5~bp1877"
+version_suffix=gl5
