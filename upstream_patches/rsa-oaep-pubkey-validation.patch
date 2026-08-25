@@ -1,0 +1,118 @@
+From 6317fa4e329e0fd0cc795cdb29d5e20d8732805b Mon Sep 17 00:00:00 2001
+From: nkraetzschmar <9020053+nkraetzschmar@users.noreply.github.com>
+Date: Mon, 17 Aug 2026 10:09:39 +0000
+Subject: [PATCH] RSA-OAEP: validate recipient public key (SP800-56Brev2
+ 6.4.2.2)
+
+NIST SP800-56Brev2 6.4.2.2 requires obtaining assurance of the
+recipient RSA public key's validity before using it for OAEP key
+transport. GnuTLS previously performed no such check in
+_wrap_nettle_pk_encrypt.
+
+Add _rsa_oaep_check_public_key() implementing the SP800-89 5.3.3
+plausibility tests (modulus length >= 2048, 2^16 < e < 2^256, n and e
+odd, no small prime factor < 752, modulus composite) directly on the
+nettle rsa_public_key mpz_t values, modelled on OpenSSL's
+ossl_rsa_sp800_56b_check_public. Invoke it in the RSA-OAEP encrypt path,
+enforced only under FIPS mode; an invalid key blocks the operation with
+GNUTLS_E_PK_INVALID_PUBKEY (which puts the module in the FIPS error
+state via the existing cleanup path).
+---
+ lib/nettle/pk.c | 74 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 74 insertions(+)
+
+diff --git a/lib/nettle/pk.c b/lib/nettle/pk.c
+index e8b36f5fa..5d04a29f7 100644
+--- a/lib/nettle/pk.c
++++ b/lib/nettle/pk.c
+@@ -1057,6 +1057,71 @@ static inline int _rsa_oaep_encrypt(gnutls_digest_algorithm_t dig,
+ 			    message, ciphertext);
+ }
+ 
++/* Partial public-key validation of a received RSA public key, as
++ * required by NIST SP800-56Brev2 6.4.2.2 (RSA-OAEP key transport) via
++ * the plausibility tests of SP800-89 5.3.3:
++ *   1. the modulus bit length is FIPS-approved (>= 2048),
++ *   2. the public exponent is in range 2^16 < e < 2^256,
++ *   3. the modulus and the public exponent are odd,
++ *   4. the modulus is composite (a plausibility test), and
++ *   5. the modulus has no factors smaller than 752.
++ * Returns 0 if the key passes, GNUTLS_E_PK_INVALID_PUBKEY otherwise. */
++static int _rsa_oaep_check_public_key(const struct rsa_public_key *pub)
++{
++	int ret = GNUTLS_E_PK_INVALID_PUBKEY;
++	size_t n_bits, e_bits;
++	mpz_t small_primes, gcd;
++	unsigned long p;
++
++	/* Step 1: modulus length approved (FIPS 186-5, >= 2048). */
++	n_bits = mpz_sizeinbase(pub->n, 2);
++	if (n_bits < 2048)
++		return gnutls_assert_val(GNUTLS_E_PK_INVALID_PUBKEY);
++
++	/* Step 2: 2^16 < e < 2^256. */
++	e_bits = mpz_sizeinbase(pub->e, 2);
++	if (e_bits <= 16 || e_bits > 256)
++		return gnutls_assert_val(GNUTLS_E_PK_INVALID_PUBKEY);
++
++	/* Step 3: n and e are odd. */
++	if (!mpz_odd_p(pub->n) || !mpz_odd_p(pub->e))
++		return gnutls_assert_val(GNUTLS_E_PK_INVALID_PUBKEY);
++
++	mpz_init(gcd);
++	mpz_init_set_ui(small_primes, 1);
++
++	/* Step 5: gcd(n, product of odd primes < 752) must be 1. */
++	for (p = 3; p < 752; p += 2) {
++		unsigned long d;
++		int is_prime = 1;
++		for (d = 3; d * d <= p; d += 2) {
++			if (p % d == 0) {
++				is_prime = 0;
++				break;
++			}
++		}
++		if (is_prime)
++			mpz_mul_ui(small_primes, small_primes, p);
++	}
++	mpz_gcd(gcd, pub->n, small_primes);
++	if (mpz_cmp_ui(gcd, 1) != 0) {
++		gnutls_assert();
++		goto cleanup;
++	}
++
++	/* Step 4: n must be composite (mpz_probab_prime_p returns 0). */
++	if (mpz_probab_prime_p(pub->n, PRIME_CHECK_PARAM) != 0) {
++		gnutls_assert();
++		goto cleanup;
++	}
++
++	ret = 0;
++cleanup:
++	mpz_clear(gcd);
++	mpz_clear(small_primes);
++	return ret;
++}
++
+ static int _wrap_nettle_pk_encrypt(gnutls_pk_algorithm_t algo,
+ 				   gnutls_datum_t *ciphertext,
+ 				   const gnutls_datum_t *plaintext,
+@@ -1136,6 +1201,15 @@ static int _wrap_nettle_pk_encrypt(gnutls_pk_algorithm_t algo,
+ 			goto cleanup;
+ 		}
+ 
++		/* SP800-56Brev2 6.4.2.2 recipient key validation (FIPS only). */
++		if (_gnutls_fips_mode_enabled()) {
++			ret = _rsa_oaep_check_public_key(&pub);
++			if (ret < 0) {
++				gnutls_assert();
++				goto cleanup;
++			}
++		}
++
+ 		bits = mpz_sizeinbase(pub.n, 2);
+ 
+ 		_gnutls_audit_data(
+-- 
+2.47.3
+
