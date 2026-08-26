@@ -12,4 +12,3 @@ rm -rf "$salsadir"
 
 apply_patches
 version_suffix="gl5~bp1877"
-version_suffix=gl5
