@@ -1,0 +1,181 @@
+commit c4eba74d4745e3a97b443abae1431658a826d2eb
+Author: Angel Yankov <angel.yankov@suse.com>
+Date:   Thu Nov 28 11:02:07 2024 +0200
+
+    SHA-1 is not allowed in FIPS-140-3 anymore after 2030. Mark it as
+    unapproved
+    
+    Signed-off-by: Angel Yankov <angel.yankov@suse.com>
+
+Index: gnutls-3.8.10/lib/crypto-api.c
+===================================================================
+--- gnutls-3.8.10.orig/lib/crypto-api.c
++++ gnutls-3.8.10/lib/crypto-api.c
+@@ -33,6 +33,7 @@
+ #include "crypto-api.h"
+ #include "iov.h"
+ #include "intprops.h"
++#include <gnutls/gnutls.h>
+ 
+ typedef struct api_cipher_hd_st {
+ 	cipher_hd_st ctx_enc;
+@@ -597,7 +598,9 @@ int gnutls_hmac_init(gnutls_hmac_hd_t *d
+ 	bool not_approved = false;
+ 
+ 	/* MD5 is only allowed internally for TLS */
+-	if (!is_mac_algo_allowed(algorithm)) {
++	if (algorithm == GNUTLS_MAC_SHA1) 
++		not_approved = true;
++	else if (!is_mac_algo_allowed(algorithm)) {
+ 		_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_ERROR);
+ 		return gnutls_assert_val(GNUTLS_E_UNWANTED_ALGORITHM);
+ 	} else if (!is_mac_algo_approved_in_fips(algorithm)) {
+@@ -757,8 +760,9 @@ int gnutls_hmac_fast(gnutls_mac_algorith
+ {
+ 	int ret;
+ 	bool not_approved = false;
+-
+-	if (!is_mac_algo_allowed(algorithm)) {
++	if (algorithm == GNUTLS_MAC_SHA1) 
++		not_approved = true;
++	else if (!is_mac_algo_allowed(algorithm)) {
+ 		_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_ERROR);
+ 		return gnutls_assert_val(GNUTLS_E_UNWANTED_ALGORITHM);
+ 	} else if (!is_mac_algo_approved_in_fips(algorithm)) {
+@@ -839,8 +843,9 @@ int gnutls_hash_init(gnutls_hash_hd_t *d
+ {
+ 	int ret;
+ 	bool not_approved = false;
+-
+-	if (!is_mac_algo_allowed(DIG_TO_MAC(algorithm))) {
++	if (algorithm == GNUTLS_MAC_SHA1) 
++		not_approved = true;
++	else if (!is_mac_algo_allowed(DIG_TO_MAC(algorithm))) {
+ 		_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_ERROR);
+ 		return gnutls_assert_val(GNUTLS_E_UNWANTED_ALGORITHM);
+ 	} else if (!is_mac_algo_approved_in_fips(DIG_TO_MAC(algorithm))) {
+@@ -957,8 +962,9 @@ int gnutls_hash_fast(gnutls_digest_algor
+ {
+ 	int ret;
+ 	bool not_approved = false;
+-
+-	if (!is_mac_algo_allowed(DIG_TO_MAC(algorithm))) {
++	if (algorithm == GNUTLS_MAC_SHA1) 
++		not_approved = true;
++	else if (!is_mac_algo_allowed(DIG_TO_MAC(algorithm))) {
+ 		_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_ERROR);
+ 		return gnutls_assert_val(GNUTLS_E_UNWANTED_ALGORITHM);
+ 	} else if (!is_mac_algo_approved_in_fips(DIG_TO_MAC(algorithm))) {
+@@ -2173,7 +2179,9 @@ int gnutls_pbkdf2(gnutls_mac_algorithm_t
+ 	bool not_approved = false;
+ 
+ 	/* MD5 is only allowed internally for TLS */
+-	if (!is_mac_algo_allowed(mac)) {
++	if (mac == GNUTLS_MAC_SHA1) 
++		not_approved = true;
++	else if (!is_mac_algo_allowed(mac)) {
+ 		_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_ERROR);
+ 		return gnutls_assert_val(GNUTLS_E_UNWANTED_ALGORITHM);
+ 	} else if (!is_mac_algo_hmac_approved_in_fips(mac)) {
+Index: gnutls-3.8.10/lib/crypto-selftests.c
+===================================================================
+--- gnutls-3.8.10.orig/lib/crypto-selftests.c
++++ gnutls-3.8.10/lib/crypto-selftests.c
+@@ -2891,7 +2891,7 @@ int gnutls_mac_self_test(unsigned flags,
+ 	case GNUTLS_MAC_UNKNOWN:
+ 		NON_FIPS_CASE(GNUTLS_MAC_MD5, test_mac, hmac_md5_vectors);
+ 		FALLTHROUGH;
+-		CASE(GNUTLS_MAC_SHA1, test_mac, hmac_sha1_vectors);
++		NON_FIPS_CASE(GNUTLS_MAC_SHA1, test_mac, hmac_sha1_vectors);
+ 		FALLTHROUGH;
+ 		CASE(GNUTLS_MAC_SHA224, test_mac, hmac_sha224_vectors);
+ 		FALLTHROUGH;
+Index: gnutls-3.8.10/lib/fips.h
+===================================================================
+--- gnutls-3.8.10.orig/lib/fips.h
++++ gnutls-3.8.10/lib/fips.h
+@@ -79,7 +79,6 @@ inline static bool
+ is_mac_algo_hmac_approved_in_fips(gnutls_mac_algorithm_t algo)
+ {
+ 	switch (algo) {
+-	case GNUTLS_MAC_SHA1:
+ 	case GNUTLS_MAC_SHA256:
+ 	case GNUTLS_MAC_SHA384:
+ 	case GNUTLS_MAC_SHA512:
+Index: gnutls-3.8.10/tests/fips-test.c
+===================================================================
+--- gnutls-3.8.10.orig/tests/fips-test.c
++++ gnutls-3.8.10/tests/fips-test.c
+@@ -397,11 +397,12 @@ void doit(void)
+ 	}
+ 	FIPS_POP_CONTEXT(ERROR);
+ 
++	FIPS_PUSH_CONTEXT();
+ 	ret = gnutls_hmac_init(&mh, GNUTLS_MAC_SHA1, key.data, key.size);
+ 	if (ret < 0) {
+-		fail("gnutls_hmac_init failed\n");
++		fail("gnutls_hmac_init failed for sha1\n");
+ 	}
+-	gnutls_hmac_deinit(mh, NULL);
++	FIPS_POP_CONTEXT(NOT_APPROVED);
+ 
+ 	ret = gnutls_hmac_init(&mh, GNUTLS_MAC_MD5, key.data, key.size);
+ 	if (ret != GNUTLS_E_UNWANTED_ALGORITHM) {
+@@ -736,7 +737,7 @@ void doit(void)
+ 	}
+ 	hashed_data.data = hash;
+ 	hashed_data.size = 20;
+-	FIPS_POP_CONTEXT(APPROVED);
++	FIPS_POP_CONTEXT(NOT_APPROVED);
+ 
+ 	/* Create a signature with ECDSA and SHA1 (2-pass API); not-approved */
+ 	FIPS_PUSH_CONTEXT();
+Index: gnutls-3.8.10/tests/gnutls_hmac_fast.c
+===================================================================
+--- gnutls-3.8.10.orig/tests/gnutls_hmac_fast.c
++++ gnutls-3.8.10/tests/gnutls_hmac_fast.c
+@@ -42,6 +42,11 @@ void doit(void)
+ 	if (debug)
+ 		gnutls_global_set_log_level(4711);
+ 
++	/* enable MD5 and SHA1 usage  */
++	if (gnutls_fips140_mode_enabled()) {
++		gnutls_fips140_set_mode(GNUTLS_FIPS140_LOG, 0);
++	}
++
+ 	err = gnutls_hmac_fast(GNUTLS_MAC_SHA1, "keykeykey", 9, "abcdefgh", 8,
+ 			       digest);
+ 	if (err < 0)
+@@ -59,11 +64,6 @@ void doit(void)
+ 		}
+ 	}
+ 
+-	/* enable MD5 usage */
+-	if (gnutls_fips140_mode_enabled()) {
+-		gnutls_fips140_set_mode(GNUTLS_FIPS140_LOG, 0);
+-	}
+-
+ 	err = gnutls_hmac_fast(GNUTLS_MAC_MD5, "keykeykey", 9, "abcdefgh", 8,
+ 			       digest);
+ 	if (err < 0)
+Index: gnutls-3.8.10/tests/kdf-api.c
+===================================================================
+--- gnutls-3.8.10.orig/tests/kdf-api.c
++++ gnutls-3.8.10/tests/kdf-api.c
+@@ -108,7 +108,6 @@ inline static bool
+ is_mac_algo_hmac_approved_in_fips(gnutls_mac_algorithm_t algo)
+ {
+ 	switch (algo) {
+-	case GNUTLS_MAC_SHA1:
+ 	case GNUTLS_MAC_SHA256:
+ 	case GNUTLS_MAC_SHA384:
+ 	case GNUTLS_MAC_SHA512:
+@@ -145,7 +144,7 @@ static void test_pbkdf2(gnutls_mac_algor
+ 	assert(gnutls_hex_decode2(&hex, &salt) >= 0);
+ 
+ 	fips_push_context(fips_context);
+-	assert(gnutls_pbkdf2(mac, &ikm, &salt, iter_count, buf, length) >= 0);
++	gnutls_pbkdf2(mac, &ikm, &salt, iter_count, buf, length);
+ 	fips_pop_context(fips_context, expected_state);
+ 	gnutls_free(ikm.data);
+ 	gnutls_free(salt.data);

@@ -1,2 +1,3 @@
 pct-full-hash-sign.patch
 rsa-oaep-pubkey-validation.patch
+disalbe_sha1.patch
