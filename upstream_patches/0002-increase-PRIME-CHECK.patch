@@ -1,0 +1,11 @@
+:100644 100644 eb6740d4c 000000000 M	lib/nettle/gnettle.h
+
+diff --git a/lib/nettle/gnettle.h b/lib/nettle/gnettle.h
+index eb6740d4c..9c42fb5f0 100644
+--- a/lib/nettle/gnettle.h
++++ b/lib/nettle/gnettle.h
+@@ -3,3 +3,3 @@
+ 
+-#define PRIME_CHECK_PARAM 8
++#define PRIME_CHECK_PARAM 26
+ #define TOMPZ(x) ((__mpz_struct *)(x))
