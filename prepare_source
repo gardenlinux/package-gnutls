@@ -1,4 +1,4 @@
 apt_src gnutls28
 import_upstream_patches
 apply_patches
-version_suffix=gl5
+version_suffix=gl8
