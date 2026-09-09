@@ -1,0 +1,54 @@
+:100644 100644 e705158a7 000000000 M	lib/priority.c
+
+diff --git a/lib/priority.c b/lib/priority.c
+index e705158a7..99cfa9775 100644
+--- a/lib/priority.c
++++ b/lib/priority.c
+@@ -198,3 +198,2 @@ static const int protocol_priority[] = { GNUTLS_TLS1_3,
+ 					 GNUTLS_TLS1_1,
+-					 GNUTLS_TLS1_0,
+ 					 GNUTLS_DTLS1_2,
+@@ -206,3 +205,3 @@ static const int protocol_priority[] = { GNUTLS_TLS1_3,
+ static const int stream_protocol_priority[] = { GNUTLS_TLS1_3, GNUTLS_TLS1_2,
+-						GNUTLS_TLS1_1, GNUTLS_TLS1_0,
++						GNUTLS_TLS1_1,
+ 						0 };
+:100644 100644 1ac30d681 000000000 M	lib/algorithms/protocols.c
+
+diff --git a/lib/algorithms/protocols.c b/lib/algorithms/protocols.c
+index 1ac30d681..8c718a2ed 100644
+--- a/lib/algorithms/protocols.c
++++ b/lib/algorithms/protocols.c
+@@ -54,3 +54,3 @@ static SYSTEM_CONFIG_OR_CONST version_entry_st sup_versions[] = {
+ 	  .transport = GNUTLS_STREAM,
+-	  .supported = 1,
++	  .supported = 0,
+ 	  .explicit_iv = 0,
+:100644 100644 317f91f84 000000000 M	lib/nettle/prf.c
+
+diff --git a/lib/nettle/prf.c b/lib/nettle/prf.c
+index 317f91f84..4c23ace16 100644
+--- a/lib/nettle/prf.c
++++ b/lib/nettle/prf.c
+@@ -22,2 +22,3 @@
+ 
++#include "fips.h"
+ #include "gnutls_int.h"
+@@ -57,2 +58,3 @@ int _gnutls_prf_raw(gnutls_mac_algorithm_t mac, size_t master_size,
+ 			  seed_size, seed, outsize, (uint8_t *)out);
++        _gnutls_switch_fips_state(GNUTLS_FIPS140_OP_NOT_APPROVED);
+ 		return 0;
+:100644 100644 d55b5e0ff 000000000 M	lib/fips.c
+
+diff --git a/lib/fips.c b/lib/fips.c
+index d55b5e0ff..dd3dbbde8 100644
+--- a/lib/fips.c
++++ b/lib/fips.c
+@@ -580,7 +580,2 @@ int _gnutls_fips_perform_self_checks2(void)
+ 	/* MAC (includes message digest test) */
+-	ret = gnutls_mac_self_test(0, GNUTLS_MAC_SHA1);
+-	if (ret < 0) {
+-		return gnutls_assert_val(GNUTLS_E_SELF_TEST_ERROR);
+-	}
+-
+ 	ret = gnutls_mac_self_test(0, GNUTLS_MAC_SHA224);
