@@ -2,3 +2,4 @@ pct-full-hash-sign.patch
 rsa-oaep-pubkey-validation.patch
 0002-increase-PRIME-CHECK.patch
 disable_sha1_mac.patch
+disable_sha1_TLSv1.patch
