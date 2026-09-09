@@ -82,7 +82,7 @@ index e8b36f5fa..5d04a29f7 100644
 +	}
 +
 +	/* Step 4: n must be composite (mpz_probab_prime_p returns 0). */
-+	if (mpz_probab_prime_p(pub->n, PRIME_CHECK_PARAM) != 0) {
++	if (mpz_probab_prime_p(pub->n, PRIME_CHECK_PARAM) != 0 && mpz_perfect_power_p(pub->n) != 0) {
 +		gnutls_assert();
 +		goto cleanup;
 +	}
