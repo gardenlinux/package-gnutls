@@ -12,4 +12,4 @@ rm -rf "$salsadir"
 
 apply_patches
 import_upstream_patches
-version_suffix="gl9~bp1877"
+version_suffix="gl10~bp1877"
