@@ -1,0 +1,31 @@
+TLS 1.2 cipher suites using HMAC-SHA-1 for record authentication are marked as APPROVED, although SHA-1 had been configured as a non-approved
+
+In  _gnutls_init_record_state() function, the FIPS service indicator determination performed during the record state initialization takes into account the cipher algorithm, but does not consider the MAC algorithm used for record authentication
+
+When session tickets are enabled, GnuTLS internally uses HMAC-SHA-1 to authenticate the ticket; this operation is performed through internal MAC functions that do not update the FIPS service indicator
+
+diff --git a/lib/constate.c b/lib/constate.c
+--- a/lib/constate.c
++++ b/lib/constate.c
+@@ -572,7 +572,7 @@ static int _gnutls_init_record_state(record_parameters_st *params,
+ 		return gnutls_assert_val(ret);
+ 	}
+ 
+-	if (is_cipher_algo_allowed(params->cipher->id))
++	if (is_cipher_algo_allowed(params->cipher->id) && (params->mac->id == GNUTLS_MAC_AEAD || is_mac_algo_approved_in_fips(params->mac->id)))
+ 		_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_APPROVED);
+ 	else
+ 		_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_NOT_APPROVED);
+diff --git a/lib/ext/session_ticket.c b/lib/ext/session_ticket.c
+--- a/lib/ext/session_ticket.c
++++ b/lib/ext/session_ticket.c
+@@ -178,6 +178,9 @@ static int digest_ticket(const gnutls_datum_t *key, struct ticket_st *ticket,
+ 		    ticket->encrypted_state_len);
+ 	_gnutls_mac_deinit(&digest_hd, digest);
+ 
++	if (!is_mac_algo_approved_in_fips(TICKET_MAC_ALGO))
++		_gnutls_switch_fips_state(GNUTLS_FIPS140_OP_NOT_APPROVED);
++
+ 	return 0;
+ }
+ 
