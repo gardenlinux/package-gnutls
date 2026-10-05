@@ -3,3 +3,5 @@ rsa-oaep-pubkey-validation.patch
 0002-increase-PRIME-CHECK.patch
 disable_sha1_mac.patch
 disable_sha1_TLSv1.patch
+tls1.2_sha1_hmac.patch
+tls13_init_zeroes.patch
